@@ -32,7 +32,7 @@ def predict_captions(model, dataloader, text_field):
             images = images.to(device)
             with torch.no_grad():
                 out, _ = model.beam_search(images, 30, text_field.vocab.stoi['<eos>'], 5, out_size=1)
-            caps_gen = text_field.decode(out, join_words=False)
+            caps_gen = text_field.decode(out, join_words=True)
             for id_i, cap_i in zip(image_ids, caps_gen):
                 scan_id, frame_id = id_i[0].split("-")
 
