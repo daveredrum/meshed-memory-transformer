@@ -20,6 +20,7 @@ random.seed(1234)
 torch.manual_seed(1234)
 np.random.seed(1234)
 
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 def predict_captions(model, dataloader, text_field):
     import itertools
