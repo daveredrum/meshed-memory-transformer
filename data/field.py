@@ -143,7 +143,7 @@ class ScanNetDetectionsField(RawField):
             else:
                 self.detections_path = tmp_detections_path
 
-        super(ImageDetectionsField, self).__init__(preprocessing, postprocessing)
+        super(ScanNetDetectionsField, self).__init__(preprocessing, postprocessing)
 
     def preprocess(self, x, avoid_precomp=False):
         # image_id = int(x.split('_')[-1].split('.')[0])
