@@ -34,7 +34,11 @@ def predict_captions(model, dataloader, text_field):
                 out, _ = model.beam_search(images, 30, text_field.vocab.stoi['<eos>'], 5, out_size=1)
             caps_gen = text_field.decode(out, join_words=False)
             for id_i, cap_i in zip(image_ids, caps_gen):
-                gen[id_i] = cap_i
+                scan_id, frame_id = id_i.split("-")
+
+                if scan_id not in gen: gen[scan_id] = {}
+                gen[scan_id][frame_id] = cap_i
+
             pbar.update()
 
     return gen
@@ -44,7 +48,6 @@ def get_image_ids(feature_database):
         image_ids = sorted(list(database.keys()))
 
     return image_ids
-
 
 if __name__ == '__main__':
     device = torch.device('cuda')

@@ -147,9 +147,7 @@ class ScanNetDetectionsField(RawField):
 
     def preprocess(self, x, avoid_precomp=False):
         # image_id = int(x.split('_')[-1].split('.')[0])
-        print(x.split("/"))
-        exit()
-        scan_id, _, image_id = x.split("/")[:-3]
+        scan_id, _, image_id = x.split("/")[-3:]
         image_id = image_id.split(".")[0]
         try:
             f = h5py.File(self.detections_path, 'r')
