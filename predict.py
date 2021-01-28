@@ -34,10 +34,7 @@ def predict_captions(model, dataloader, text_field):
                 out, _ = model.beam_search(images, 30, text_field.vocab.stoi['<eos>'], 5, out_size=1)
             caps_gen = text_field.decode(out, join_words=False)
             for id_i, cap_i in zip(image_ids, caps_gen):
-                print(id_i)
-                print(cap_i)
-                exit()
-                scan_id, frame_id = id_i.split("-")
+                scan_id, frame_id = id_i[0].split("-")
 
                 if scan_id not in gen: gen[scan_id] = {}
                 gen[scan_id][frame_id] = cap_i
