@@ -277,3 +277,52 @@ class COCO(PairedDataset):
 
         return train_samples, val_samples, test_samples
 
+class ScanNet(PairedDataset):
+    def __init__(self, image_field, text_field, img_root, img_ids):
+        roots = {}
+        roots['test'] = {
+            'img': img_root,
+            'cap': None
+        }
+
+        ids = {}
+        ids['test'] = img_ids
+
+        with nostdout():
+            self.train_examples, self.val_examples, self.test_examples = self.get_samples(roots, ids)
+        examples = self.train_examples + self.val_examples + self.test_examples
+        super(ScanNet, self).__init__(examples, {'image': image_field, 'text': text_field})
+
+    @property
+    def splits(self):
+        train_split = None
+        val_split = None
+        test_split = PairedDataset(self.test_examples, self.fields)
+
+        return train_split, val_split, test_split
+
+    @classmethod
+    def get_samples(cls, roots, ids_dataset=None):
+        train_samples = []
+        val_samples = []
+        test_samples = []
+
+        for split in roots:
+            img_root = roots[split]
+            ids = ids_dataset[split]
+
+            for index in range(len(ids)):
+                ann_id = ids[index] # e.g. scene0000_00-0
+                caption = ann_id # there's no GT
+                scan_id, img_id = ann_id.split("-")
+
+                example = Example.fromdict({'image': os.path.join(img_root, "{}/color/{}".format(scan_id, img_id)), 'text': caption})
+
+                if split == 'train':
+                    train_samples.append(example)
+                elif split == 'val':
+                    val_samples.append(example)
+                elif split == 'test':
+                    test_samples.append(example)
+
+        return train_samples, val_samples, test_samples
