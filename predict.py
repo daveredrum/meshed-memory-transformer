@@ -27,7 +27,7 @@ def predict_captions(model, dataloader, text_field):
     import itertools
     model.eval()
     gen = {}
-    with tqdm(desc='Evaluation', unit='it', total=len(dataloader)) as pbar:
+    with tqdm(desc='Generating captions', unit='it', total=len(dataloader)) as pbar:
         for it, (images, image_ids) in enumerate(iter(dataloader)):
             images = images.to(device)
             with torch.no_grad():
