@@ -316,6 +316,7 @@ class ScanNet(PairedDataset):
                 caption = ann_id # there's no GT
                 scan_id, img_id = ann_id.split("-")
                 print(ann_id, caption, scan_id, img_id)
+                exit()
 
                 example = Example.fromdict({'image': os.path.join(img_root, "{}/color/{}".format(scan_id, img_id)), 'text': caption})
 
