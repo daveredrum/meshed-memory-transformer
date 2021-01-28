@@ -308,7 +308,7 @@ class ScanNet(PairedDataset):
         test_samples = []
 
         for split in roots:
-            img_root = roots[split]
+            img_root = roots[split]["img"]
             ids = ids_dataset[split]
 
             for index in range(len(ids)):
