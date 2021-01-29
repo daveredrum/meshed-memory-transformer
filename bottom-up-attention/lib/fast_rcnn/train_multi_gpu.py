@@ -143,13 +143,13 @@ class SolverWrapper(object):
         total = 0.0
         data = 0.0
         params = 0.0
-        for k,v in net.blobs.iteritems():
+        for k,v in net.blobs.items():
             gb = float(v.data.nbytes)/1024/1024/1024
             print ('%s : %.3f GB %s' % (k,gb,v.data.shape))
             total += gb
             data += gb
         print ('Memory Usage: Data %.3f GB' % data)
-        for k,v in net.params.iteritems():
+        for k,v in net.params.items():
             for i,p in enumerate(v):
                 gb = float(p.data.nbytes)/1024/1024/1024
                 total += gb
