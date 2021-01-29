@@ -36,10 +36,10 @@ class SolverWrapper(object):
             assert cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED
 
         if cfg.TRAIN.BBOX_REG:
-            print 'Computing bounding-box regression targets...'
+            print ('Computing bounding-box regression targets...')
             self.bbox_means, self.bbox_stds = \
                     rdl_roidb.add_bbox_regression_targets(roidb)
-            print 'done'
+            print ('done')
 
         self.solver = caffe.SGDSolver(solver_prototxt)
         if pretrained_model is not None:
@@ -120,7 +120,7 @@ class SolverWrapper(object):
         filename = os.path.join(self.output_dir, filename)
         if self.gpu_id == 0:
             net.save(str(filename))
-        print 'Wrote snapshot to: {:s}'.format(filename)
+        print ('Wrote snapshot to: {:s}'.format(filename))
 
         if scale_bbox_params_faster_rcnn:
             # restore net to original state
@@ -139,24 +139,24 @@ class SolverWrapper(object):
 
     def track_memory(self):
         net = self.solver.net
-        print 'Memory Usage:'
+        print ('Memory Usage:')
         total = 0.0
         data = 0.0
         params = 0.0
         for k,v in net.blobs.iteritems():
             gb = float(v.data.nbytes)/1024/1024/1024
-            print '%s : %.3f GB %s' % (k,gb,v.data.shape)
+            print ('%s : %.3f GB %s' % (k,gb,v.data.shape))
             total += gb
             data += gb
-        print 'Memory Usage: Data %.3f GB' % data
+        print ('Memory Usage: Data %.3f GB' % data)
         for k,v in net.params.iteritems():
             for i,p in enumerate(v):
                 gb = float(p.data.nbytes)/1024/1024/1024
                 total += gb
                 params += gb
-                print '%s[%d] : %.3f GB %s' % (k,i,gb,p.data.shape)
-        print 'Memory Usage: Params %.3f GB' % params
-        print 'Memory Usage: Total %.3f GB' % total
+                print ('%s[%d] : %.3f GB %s' % (k,i,gb,p.data.shape))
+        print ('Memory Usage: Params %.3f GB' % params)
+        print ('Memory Usage: Total %.3f GB' % total)
         
     def getSolver(self):
         return self.solver
@@ -183,7 +183,7 @@ def solve(proto, roidb, pretrained_model, gpus, uid, rank, output_dir, max_iter)
         solver.net.after_backward(nccl)
     count = 0
     while count < max_iter:
-        print 'Solver step'
+        print ('Solver step')
         solver.step(cfg.TRAIN.SNAPSHOT_ITERS)
         if rank == 0:
             solverW.snapshot()
@@ -193,13 +193,13 @@ def solve(proto, roidb, pretrained_model, gpus, uid, rank, output_dir, max_iter)
 def get_training_roidb(imdb):
     """Returns a roidb (Region of Interest database) for use in training."""
     if cfg.TRAIN.USE_FLIPPED:
-        print 'Appending horizontally-flipped training examples...'
+        print ('Appending horizontally-flipped training examples...')
         imdb.append_flipped_images()
-        print 'done'
+        print ('done')
 
-    print 'Preparing training data...'
+    print ('Preparing training data...')
     rdl_roidb.prepare_roidb(imdb)
-    print 'done'
+    print ('done')
 
     return imdb.roidb
 
@@ -223,8 +223,8 @@ def filter_roidb(roidb):
     num = len(roidb)
     filtered_roidb = [entry for entry in roidb if is_valid(entry)]
     num_after = len(filtered_roidb)
-    print 'Filtered {} roidb entries: {} -> {}'.format(num - num_after,
-                                                       num, num_after)
+    print ('Filtered {} roidb entries: {} -> {}'.format(num - num_after,
+                                                       num, num_after))
     return filtered_roidb
 
 
