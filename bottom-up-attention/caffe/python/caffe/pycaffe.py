@@ -113,7 +113,7 @@ def _Net_forward(self, blobs=None, start=None, end=None, **kwargs):
             raise Exception('Input blob arguments do not match net inputs.')
         # Set input according to defined shapes and make arrays single and
         # C-contiguous as Caffe expects.
-        for in_, blob in six.items(kwargs):
+        for in_, blob in six.iteritems(kwargs):
             if blob.shape[0] != self.blobs[in_].shape[0]:
                 raise Exception('Input is not batch sized')
             self.blobs[in_].data[...] = blob
