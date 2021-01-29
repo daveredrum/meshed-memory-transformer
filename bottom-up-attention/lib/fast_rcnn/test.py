@@ -15,7 +15,7 @@ import numpy as np
 import cv2
 import caffe
 from fast_rcnn.nms_wrapper import nms, soft_nms
-import cPickle
+import pickle
 from utils.blob import im_list_to_blob
 import os
 from utils.cython_bbox import bbox_overlaps
