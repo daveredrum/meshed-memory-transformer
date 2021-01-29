@@ -26,8 +26,8 @@ for split in ['train', 'val']:
     devkit_path = '/scratch0/ILSVRC/devkit/'
     data_path = '/scratch0/ILSVRC2015/'
     __sets[name] = (lambda split=split, devkit_path=devkit_path, data_path=data_path: imagenet(split, devkit_path, data_path))
-    print name
-    print __sets[name]
+    print (name)
+    print (__sets[name])
 
 # Set up coco_2014_<split>
 for year in ['2014']:
