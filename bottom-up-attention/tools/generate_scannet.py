@@ -244,12 +244,16 @@ if __name__ == '__main__':
     caffe.set_mode_gpu()
     caffe.set_device(gpu_id)
 
-    rpn = caffe.Net(prototxt["rpn"], caffe.TEST, weights=args.caffemodel)
+    interm_prefix = "/mnt/raid/davech2y/"
+    interm_hdf5 = "{}/{}.interm.hdf5".format(interm_prefix, args.outname) # intermediate features
+    if not os.path.exists(interm_hdf5): 
+        rpn = caffe.Net(prototxt["rpn"], caffe.TEST, weights=args.caffemodel)
+        generate_features(rpn, image_ids, interm_hdf5)
+
+        print("feature generation finished! please re-run this script to generate detections...")
+        exit()
+
     rcnn = caffe.Net(prototxt["rcnn"], caffe.TEST, weights=args.caffemodel)
-
-    interm_hdf5 = "{}.interm.hdf5".format(args.outname) # intermediate features
-    if not os.path.exists(interm_hdf5): generate_features(rpn, image_ids, interm_hdf5)
-
     out_json = '{}.json'.format(args.outname)
     out_hdf5 = '{}.hdf5'.format(args.outname)
     generate_results(rcnn, image_ids, interm_hdf5, out_json, out_hdf5)
