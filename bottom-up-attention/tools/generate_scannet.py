@@ -109,15 +109,16 @@ def parse_args():
                         default='0', type=str)
     parser.add_argument('--def', dest='prototxt',
                         help='prototxt file defining the network',
-                        default=None, type=str)
+                        default="models/vg/ResNet-101/faster_rcnn_end2end/test.prototxt", type=str)
     parser.add_argument('--net', dest='caffemodel',
                         help='model to use',
-                        default=None, type=str)
+                        default="data/faster_rcnn_models/resnet101_faster_rcnn_final.caffemodel", type=str)
     parser.add_argument('--out', dest='outfile',
                         help='output filepath',
                         default=None, type=str)
     parser.add_argument('--cfg', dest='cfg_file',
-                        help='optional config file', default=None, type=str)
+                        help='optional config file', 
+                        default="experiments/cfgs/faster_rcnn_end2end_resnet.yml", type=str)
     parser.add_argument('--scannet_root', dest='scannet_root',
                         help='dataset to use',
                         default='/cluster/sorona/dchen/ScanNet_frames', type=str)
