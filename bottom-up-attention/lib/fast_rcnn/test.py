@@ -246,9 +246,7 @@ def feature_extract(net, im, boxes=None, force_boxes=False):
         forward_kwargs['rois'] = blobs['rois'].astype(np.float32, copy=False)
     blobs_out = net.forward(**forward_kwargs)
 
-    print(blobs_out.keys())
-
-    # im_features = net.blobs['res4b22_relu'].data
+    im_features = net.blobs['res4b22'].data
 
     print(im_features.shape)
     exit()
