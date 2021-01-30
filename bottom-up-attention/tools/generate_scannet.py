@@ -290,25 +290,29 @@ if __name__ == '__main__':
     assert cfg.TEST.HAS_RPN
 
     image_ids = load_image_ids(args.scannet_root)
-    random.seed(10)
-    random.shuffle(image_ids)
-    # Split image ids between gpus
-    image_ids = [image_ids[i::len(gpus)] for i in range(len(gpus))]
+    # random.seed(10)
+    # random.shuffle(image_ids)
+    # # Split image ids between gpus
+    # image_ids = [image_ids[i::len(gpus)] for i in range(len(gpus))]
     
-    caffe.init_log()
-    caffe.log('Using devices %s' % str(gpus))
-    procs = []    
+    # caffe.init_log()
+    # caffe.log('Using devices %s' % str(gpus))
+    # procs = []    
     
-    for i,gpu_id in enumerate(gpus):
-        out_json = '%s.%d.json' % (args.outname, gpu_id)
-        out_hdf5 = '%s.%d.hdf5' % (args.outname, gpu_id)
-        p = Process(target=generate_results,
-                    args=(gpu_id, args.prototxt, args.caffemodel, image_ids[i], out_json, out_hdf5))
-        p.daemon = True
-        p.start()
-        procs.append(p)
-    for p in procs:
-        p.join()            
+    out_json = '%s.%d.json' % (args.outname, gpu_id)
+    out_hdf5 = '%s.%d.hdf5' % (args.outname, gpu_id)
+    generate_results(gpu_id, args.prototxt, args.caffemodel, image_ids, out_json, out_hdf5)
+
+    # for i,gpu_id in enumerate(gpus):
+    #     out_json = '%s.%d.json' % (args.outname, gpu_id)
+    #     out_hdf5 = '%s.%d.hdf5' % (args.outname, gpu_id)
+    #     p = Process(target=generate_results,
+    #                 args=(gpu_id, args.prototxt, args.caffemodel, image_ids[i], out_json, out_hdf5))
+    #     p.daemon = True
+    #     p.start()
+    #     procs.append(p)
+    # for p in procs:
+    #     p.join()            
                   
     # # post-processing
     # json_files = glob("{}.*.json".format(args.outname))
