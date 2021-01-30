@@ -270,7 +270,7 @@ def feature_detect(net, im, im_features, im_info, im_scales):
 
     # do forward
     forward_kwargs = {
-        'data': im_features.astype(np.float32, copy=False),
+        'res4b22': im_features.astype(np.float32, copy=False),
         'im_info': im_info.astype(np.float32, copy=False)
     }
     blobs_out = net.forward(**forward_kwargs)
