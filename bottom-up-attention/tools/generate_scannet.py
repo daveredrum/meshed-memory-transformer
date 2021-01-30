@@ -13,7 +13,7 @@
 
 import _init_paths
 from fast_rcnn.config import cfg, cfg_from_file
-from fast_rcnn.test import im_detect,_get_blobs
+from fast_rcnn.test import im_detect,_get_blobs, feature_extract
 from fast_rcnn.nms_wrapper import nms
 from utils.timer import Timer
 
@@ -63,7 +63,8 @@ def load_image_ids(scannet_root):
 def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
 
     im = cv2.imread(im_file)
-    scores, boxes, attr_scores, rel_scores = im_detect(net, im)
+    # scores, boxes, attr_scores, rel_scores = im_detect(net, im)
+    features = feature_extract(net, im)
 
     # Keep the original boxes, don't worry about the regresssion bbox outputs
     rois = net.blobs['rois'].data.copy()

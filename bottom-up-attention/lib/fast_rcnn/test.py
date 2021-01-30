@@ -196,6 +196,63 @@ def im_detect(net, im, boxes=None, force_boxes=False):
 
     return scores, pred_boxes, attr_scores, rel_scores
 
+def feature_extract(net, im, boxes=None, force_boxes=False):
+    """Detect object classes in an image given object proposals.
+
+    Arguments:
+        net (caffe.Net): Fast R-CNN network to use
+        im (ndarray): color image to test (in BGR order)
+        boxes (ndarray): R x 4 array of object proposals or None (for RPN)
+
+    Returns:
+        scores (ndarray): R x K array of object class scores (K includes
+            background as object category 0)
+        boxes (ndarray): R x (4*K) array of predicted bounding boxes
+        attr_scores (ndarray): R x M array of attribute class scores
+    """
+    blobs, im_scales = _get_blobs(im, boxes)
+    if force_boxes:
+        blobs['rois'] = _get_rois_blob(boxes, im_scales)
+
+    # When mapping from image ROIs to feature map ROIs, there's some aliasing
+    # (some distinct image ROIs get mapped to the same feature ROI).
+    # Here, we identify duplicate feature ROIs, so we only compute features
+    # on the unique subset.
+    if cfg.DEDUP_BOXES > 0 and not cfg.TEST.HAS_RPN:
+        v = np.array([1, 1e3, 1e6, 1e9, 1e12])
+        hashes = np.round(blobs['rois'] * cfg.DEDUP_BOXES).dot(v)
+        _, index, inv_index = np.unique(hashes, return_index=True,
+                                        return_inverse=True)
+        blobs['rois'] = blobs['rois'][index, :]
+        boxes = boxes[index, :]
+
+    im_blob = blobs['data']
+    blobs['im_info'] = np.array(
+        [[im_blob.shape[2], im_blob.shape[3], im_scales[0]]],
+        dtype=np.float32)
+
+    # reshape network inputs
+    net.blobs['data'].reshape(*(blobs['data'].shape))
+    if 'im_info' in net.blobs:
+        net.blobs['im_info'].reshape(*(blobs['im_info'].shape))
+    if force_boxes or not cfg.TEST.HAS_RPN:
+        net.blobs['rois'].reshape(*(blobs['rois'].shape))
+
+    # do forward
+    forward_kwargs = {'data': blobs['data'].astype(np.float32, copy=False)}
+    if 'im_info' in net.blobs:
+        forward_kwargs['im_info'] = blobs['im_info'].astype(np.float32, copy=False)
+    if force_boxes or not cfg.TEST.HAS_RPN:
+        forward_kwargs['rois'] = blobs['rois'].astype(np.float32, copy=False)
+    blobs_out = net.forward(**forward_kwargs)
+
+    im_features = blobs_out['res4b22']
+
+    print(im_features.shape)
+    exit()
+
+    return im_features
+
 def vis_detections(im, class_name, dets, thresh=0.3, filename='vis.png'):
     """Visual debugging of detections."""
     import matplotlib.pyplot as plt
