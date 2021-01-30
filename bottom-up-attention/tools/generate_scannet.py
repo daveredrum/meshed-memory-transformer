@@ -88,7 +88,7 @@ def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
         keep_boxes = np.argsort(max_conf)[::-1][:MAX_BOXES]
    
     return {
-        'image_id': image_id,
+        'image_id': str.encode(image_id), # str to bytes
         'image_h': np.size(im, 0),
         'image_w': np.size(im, 1),
         'num_boxes' : len(keep_boxes),
