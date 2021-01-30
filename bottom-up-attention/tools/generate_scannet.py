@@ -186,7 +186,7 @@ def generate_features(rpn, image_ids, interm_hdf5):
     for im_file, image_id in image_ids:
         _t['misc'].tic()
         features, im_info, im_scales, im_shapes = get_features_from_im(rpn, im_file)
-        intermfile.create_dataset("{}_features".format(image_id), data=features)
+        intermfile.create_dataset("{}_features".format(image_id), data=features.reshape((-1)))
         intermfile.create_dataset("{}_im_info".format(image_id), data=im_info)
         intermfile.create_dataset("{}_im_scales".format(image_id), data=im_scales)
         intermfile.create_dataset("{}_im_shapes".format(image_id), data=im_shapes)
@@ -208,7 +208,7 @@ def generate_results(rcnn, image_ids, interm_hdf5, out_json, out_hdf5):
     count = 0
     for im_file, image_id in image_ids:
         _t['misc'].tic()
-        features = intermfile["{}_features".format(image_id)][()]
+        features = intermfile["{}_features".format(image_id)][()].reshape((1, 1024, 38, 50))
         im_info = intermfile["{}_im_info".format(image_id)][()]
         im_scales = intermfile["{}_im_scales".format(image_id)][()]
         im_shapes = intermfile["{}_im_shapes".format(image_id)][()]
