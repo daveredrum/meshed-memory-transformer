@@ -120,7 +120,7 @@ def parse_args():
     parser.add_argument('--rpn', dest='rpn',
                         help='prototxt file defining the network',
                         default="models/vg/ResNet-101/faster_rcnn_end2end_final/rpn.prototxt", type=str)
-    parser.add_argument('--rcnn', dest='rcn',
+    parser.add_argument('--rcnn', dest='rcnn',
                         help='prototxt file defining the network',
                         default="models/vg/ResNet-101/faster_rcnn_end2end_final/rcnn.prototxt", type=str)
     # parser.add_argument('--net', dest='caffemodel',
