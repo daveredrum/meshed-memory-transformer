@@ -195,8 +195,9 @@ def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
     else:
         print ('GPU {:d}: missing {:d}/{:d}'.format(gpu_id, len(missing), len(image_ids)))
     if len(missing) > 0:
-        caffe.set_mode_gpu()
-        caffe.set_device(gpu_id)
+        # caffe.set_mode_gpu()
+        # caffe.set_device(gpu_id)
+        caffe.set_mode_cpu()
         net = caffe.Net(prototxt, caffe.TEST, weights=weights)
 
         jsonfile = open(out_json, "w")
