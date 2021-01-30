@@ -157,7 +157,7 @@ def generate_tsv(gpu_id, prototxt, weights, image_ids, outfile):
                 if image_id in missing:
                     _t['misc'].tic()
                     row = get_detections_from_im(net, im_file, image_id)
-                    for k, v in row:
+                    for k, v in row.items():
                         print(k, type(v))
                     exit()
                     writer.writerow(row)
