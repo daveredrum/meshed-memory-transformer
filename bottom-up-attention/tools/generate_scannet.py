@@ -222,10 +222,10 @@ def parse_args():
 #         json.dump(results, jsonfile, indent=4)
 
 def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
-    # caffe.set_mode_gpu()
-    # caffe.set_device(gpu_id)
-    caffe.set_mode_cpu()
-    net = None
+    caffe.set_mode_gpu()
+    caffe.set_device(gpu_id)
+    # caffe.set_mode_cpu()
+    # net = None
 
     net = caffe.Net(prototxt, caffe.TEST, weights=weights)
 
