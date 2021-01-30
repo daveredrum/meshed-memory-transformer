@@ -101,8 +101,7 @@ def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
         'image_h': int(np.size(im, 0)),
         'image_w': int(np.size(im, 1)),
         'num_boxes' : len(keep_boxes),
-        'boxes': cls_boxes[keep_boxes].tolist(),
-        'features': pool5[keep_boxes]
+        'boxes': cls_boxes[keep_boxes],
     }
     features = pool5[keep_boxes]
 
@@ -222,10 +221,9 @@ def parse_args():
 #         json.dump(results, jsonfile, indent=4)
 
 def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
-    # caffe.set_mode_gpu()
-    # caffe.set_device(gpu_id)
-    caffe.set_mode_cpu()
-    # net = None
+    caffe.set_mode_gpu()
+    caffe.set_device(gpu_id)
+    # caffe.set_mode_cpu()
 
     net = caffe.Net(prototxt, caffe.TEST, weights=weights)
 
