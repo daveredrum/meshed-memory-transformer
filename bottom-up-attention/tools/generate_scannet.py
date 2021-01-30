@@ -66,47 +66,49 @@ def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
     # scores, boxes, attr_scores, rel_scores = im_detect(net, im)
     features = feature_extract(net, im)
 
-    # Keep the original boxes, don't worry about the regresssion bbox outputs
-    rois = net.blobs['rois'].data.copy()
-    # unscale back to raw image space
-    blobs, im_scales = _get_blobs(im, None)
+    print(features.shape)
 
-    cls_boxes = rois[:, 1:5] / im_scales[0]
-    cls_prob = net.blobs['cls_prob'].data
-    pool5 = net.blobs['pool5_flat'].data
+    # # Keep the original boxes, don't worry about the regresssion bbox outputs
+    # rois = net.blobs['rois'].data.copy()
+    # # unscale back to raw image space
+    # blobs, im_scales = _get_blobs(im, None)
 
-    # Keep only the best detections
-    max_conf = np.zeros((rois.shape[0]))
-    for cls_ind in range(1,cls_prob.shape[1]):
-        cls_scores = scores[:, cls_ind]
-        dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32)
-        keep = np.array(nms(dets, cfg.TEST.NMS))
-        max_conf[keep] = np.where(cls_scores[keep] > max_conf[keep], cls_scores[keep], max_conf[keep])
+    # cls_boxes = rois[:, 1:5] / im_scales[0]
+    # cls_prob = net.blobs['cls_prob'].data
+    # pool5 = net.blobs['pool5_flat'].data
 
-    keep_boxes = np.where(max_conf >= conf_thresh)[0]
-    if len(keep_boxes) < MIN_BOXES:
-        keep_boxes = np.argsort(max_conf)[::-1][:MIN_BOXES]
-    elif len(keep_boxes) > MAX_BOXES:
-        keep_boxes = np.argsort(max_conf)[::-1][:MAX_BOXES]
+    # # Keep only the best detections
+    # max_conf = np.zeros((rois.shape[0]))
+    # for cls_ind in range(1,cls_prob.shape[1]):
+    #     cls_scores = scores[:, cls_ind]
+    #     dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32)
+    #     keep = np.array(nms(dets, cfg.TEST.NMS))
+    #     max_conf[keep] = np.where(cls_scores[keep] > max_conf[keep], cls_scores[keep], max_conf[keep])
+
+    # keep_boxes = np.where(max_conf >= conf_thresh)[0]
+    # if len(keep_boxes) < MIN_BOXES:
+    #     keep_boxes = np.argsort(max_conf)[::-1][:MIN_BOXES]
+    # elif len(keep_boxes) > MAX_BOXES:
+    #     keep_boxes = np.argsort(max_conf)[::-1][:MAX_BOXES]
    
-    # return {
-    #     'image_id': image_id.encode(), # str to bytes
-    #     'image_h': np.size(im, 0),
-    #     'image_w': np.size(im, 1),
+    # # return {
+    # #     'image_id': image_id.encode(), # str to bytes
+    # #     'image_h': np.size(im, 0),
+    # #     'image_w': np.size(im, 1),
+    # #     'num_boxes' : len(keep_boxes),
+    # #     'boxes': base64.b64encode(cls_boxes[keep_boxes]),
+    # #     'features': base64.b64encode(pool5[keep_boxes])
+    # # }
+
+    # detections = {
+    #     'image_h': int(np.size(im, 0)),
+    #     'image_w': int(np.size(im, 1)),
     #     'num_boxes' : len(keep_boxes),
-    #     'boxes': base64.b64encode(cls_boxes[keep_boxes]),
-    #     'features': base64.b64encode(pool5[keep_boxes])
+    #     'boxes': cls_boxes[keep_boxes],
     # }
+    # features = pool5[keep_boxes]
 
-    detections = {
-        'image_h': int(np.size(im, 0)),
-        'image_w': int(np.size(im, 1)),
-        'num_boxes' : len(keep_boxes),
-        'boxes': cls_boxes[keep_boxes],
-    }
-    features = pool5[keep_boxes]
-
-    return detections, features
+    # return detections, features
 
 
 def parse_args():
@@ -236,17 +238,18 @@ def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
     count = 0
     for im_file, image_id in image_ids:
         _t['misc'].tic()
-        detections, features = get_detections_from_im(net, im_file, image_id)
-        results[image_id] = detections
-        hdf5file.create_dataset(image_id, data=features)
-        _t['misc'].toc()
-        if (count % 100) == 0:
-            print ('GPU {:d}: {:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
-                    .format(gpu_id, count+1, len(image_ids), _t['misc'].average_time, 
-                    _t['misc'].average_time*(len(image_ids)-count)/3600))
-        count += 1
+        # detections, features = get_detections_from_im(net, im_file, image_id)
+        get_detections_from_im(net, im_file, image_id)
+    #     results[image_id] = detections
+    #     hdf5file.create_dataset(image_id, data=features)
+    #     _t['misc'].toc()
+    #     if (count % 100) == 0:
+    #         print ('GPU {:d}: {:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
+    #                 .format(gpu_id, count+1, len(image_ids), _t['misc'].average_time, 
+    #                 _t['misc'].average_time*(len(image_ids)-count)/3600))
+    #     count += 1
 
-    json.dump(results, jsonfile, indent=4)
+    # json.dump(results, jsonfile, indent=4)
 
 # def merge_jsons(json_files, outname):
 #     outfile = "{}.json".format(outname)

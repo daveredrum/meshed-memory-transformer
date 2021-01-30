@@ -248,9 +248,6 @@ def feature_extract(net, im, boxes=None, force_boxes=False):
 
     im_features = net.blobs['res4b22'].data
 
-    print(im_features.shape)
-    exit()
-
     return im_features
 
 def vis_detections(im, class_name, dets, thresh=0.3, filename='vis.png'):
