@@ -281,7 +281,7 @@ if __name__ == '__main__':
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
 
-    gpu_id = args.gpu_id
+    gpu_id = int(args.gpu_id)
     # gpu_list = gpu_id.split(',')
     # gpus = [int(i) for i in gpu_list]
 
