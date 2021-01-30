@@ -60,7 +60,7 @@ def load_image_ids(scannet_root):
     return split
 
     
-def get_detections_from_im(net, im_file, image_id, conf_thresh=0.4):
+def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
 
     im = cv2.imread(im_file)
     scores, boxes, attr_scores, rel_scores = im_detect(net, im)
@@ -232,13 +232,13 @@ def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
     jsonfile = open(out_json, "w")
     hdf5file = h5py.File(out_hdf5, "w", libver="latest")
 
-    # results = {}
+    results = {}
     _t = {'misc' : Timer()}
     count = 0
     for im_file, image_id in image_ids:
         _t['misc'].tic()
         detections, features = get_detections_from_im(net, im_file, image_id)
-        # results[image_id] = detections
+        results[image_id] = detections
         hdf5file.create_dataset(image_id, data=features)
         _t['misc'].toc()
         if (count % 100) == 0:
@@ -247,7 +247,7 @@ def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
                     _t['misc'].average_time*(len(image_ids)-count)/3600))
         count += 1
 
-    # json.dump(results, jsonfile, indent=4)
+    json.dump(results, jsonfile, indent=4)
 
 # def merge_jsons(json_files, outname):
 #     outfile = "{}.json".format(outname)
