@@ -281,8 +281,8 @@ if __name__ == '__main__':
     for p in procs:
         p.join()            
                   
-    # post-processing
-    json_files = glob("{}.*.json".format(args.outname))
-    merge_jsons(json_files, args.outname)
-    hdf5_files = glob("{}.*.hdf5".format(args.outname))
-    merge_hdf5s(hdf5_files, args.outname)
+    # # post-processing
+    # json_files = glob("{}.*.json".format(args.outname))
+    # merge_jsons(json_files, args.outname)
+    # hdf5_files = glob("{}.*.hdf5".format(args.outname))
+    # merge_hdf5s(hdf5_files, args.outname)
