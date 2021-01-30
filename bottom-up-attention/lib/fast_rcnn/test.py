@@ -248,9 +248,9 @@ def feature_extract(net, im, boxes=None, force_boxes=False):
 
     im_features = net.blobs['res4b22'].data
 
-    return im_features, im_info, im_scales
+    return im_features, im_info, im_scales, im.shape
 
-def feature_detect(net, im, im_features, im_info, im_scales):
+def feature_detect(net, im_features, im_info, im_scales, im_shapes):
     """Detect object classes in an image given object proposals.
 
     Arguments:
@@ -293,7 +293,7 @@ def feature_detect(net, im, im_features, im_info, im_scales):
         # Apply bounding-box regression deltas
         box_deltas = blobs_out['bbox_pred']
         pred_boxes = bbox_transform_inv(boxes, box_deltas)
-        pred_boxes = clip_boxes(pred_boxes, im.shape)
+        pred_boxes = clip_boxes(pred_boxes, im_shapes)
     else:
         # Simply repeat the boxes, once for each class
         pred_boxes = np.tile(boxes, (1, scores.shape[1]))

@@ -41,75 +41,6 @@ FIELDNAMES = ['image_id', 'image_w','image_h','num_boxes', 'boxes', 'features']
 MIN_BOXES = 10
 MAX_BOXES = 50
 
-def load_image_ids(scannet_root):
-    ''' Load a list of (path,image_id tuples). Modify this to suit your data locations. '''
-    split = []
-
-    scan_list = sorted(os.listdir(scannet_root))
-    for scan_id in scan_list:
-        image_root = os.path.join(scannet_root, scan_id, "color")
-        image_list = sorted(os.listdir(image_root))
-        for image_name in image_list:
-            image_id = image_name.split(".")[0] # e.g. 0.jpg
-
-            image_path = os.path.join(image_root, image_name)
-            image_key = "{}-{}".format(scan_id, image_id) # e.g. scene0000_00-0
-
-            split.append((image_path, image_key))
-
-    return split
-
-    
-def get_detections_from_im(rpn, rcnn, im_file, conf_thresh=0.2):
-
-    im = cv2.imread(im_file)
-    # scores, boxes, attr_scores, rel_scores = im_detect(net, im)
-    features, im_info, im_scales = feature_extract(rpn, im)
-    scores, boxes, attr_scores, rel_scores = feature_detect(rcnn, im, features, im_info, im_scales)
-
-    # Keep the original boxes, don't worry about the regresssion bbox outputs
-    rois = rcnn.blobs['rois'].data.copy()
-    # unscale back to raw image space
-    blobs, im_scales = _get_blobs(im, None)
-
-    cls_boxes = rois[:, 1:5] / im_scales[0]
-    cls_prob = rcnn.blobs['cls_prob'].data
-    pool5 = rcnn.blobs['pool5_flat'].data
-
-    # Keep only the best detections
-    max_conf = np.zeros((rois.shape[0]))
-    for cls_ind in range(1,cls_prob.shape[1]):
-        cls_scores = scores[:, cls_ind]
-        dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32)
-        keep = np.array(nms(dets, cfg.TEST.NMS))
-        max_conf[keep] = np.where(cls_scores[keep] > max_conf[keep], cls_scores[keep], max_conf[keep])
-
-    keep_boxes = np.where(max_conf >= conf_thresh)[0]
-    if len(keep_boxes) < MIN_BOXES:
-        keep_boxes = np.argsort(max_conf)[::-1][:MIN_BOXES]
-    elif len(keep_boxes) > MAX_BOXES:
-        keep_boxes = np.argsort(max_conf)[::-1][:MAX_BOXES]
-   
-    # return {
-    #     'image_id': image_id.encode(), # str to bytes
-    #     'image_h': np.size(im, 0),
-    #     'image_w': np.size(im, 1),
-    #     'num_boxes' : len(keep_boxes),
-    #     'boxes': base64.b64encode(cls_boxes[keep_boxes]),
-    #     'features': base64.b64encode(pool5[keep_boxes])
-    # }
-
-    detections = {
-        'image_h': int(np.size(im, 0)),
-        'image_w': int(np.size(im, 1)),
-        'num_boxes' : len(keep_boxes),
-        'boxes': cls_boxes[keep_boxes],
-    }
-    features = pool5[keep_boxes]
-
-    return detections, features
-
-
 def parse_args():
     """
     Parse input arguments
@@ -146,140 +77,156 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-    
-# def generate_tsv(gpu_id, prototxt, weights, image_ids, outfile):
-#     # First check if file exists, and if it is complete
-#     wanted_ids = set([image_id[1] for image_id in image_ids])
-#     found_ids = set()
-#     if os.path.exists(outfile):
-#         with open(outfile) as tsvfile:
-#             reader = csv.DictReader(tsvfile, delimiter='\t', fieldnames = FIELDNAMES)
-#             for item in reader:
-#                 found_ids.add(item['image_id'])
-#     missing = wanted_ids - found_ids
-#     if len(missing) == 0:
-#         print ('GPU {:d}: already completed {:d}'.format(gpu_id, len(image_ids)))
-#     else:
-#         print ('GPU {:d}: missing {:d}/{:d}'.format(gpu_id, len(missing), len(image_ids)))
-#     if len(missing) > 0:
-#         caffe.set_mode_gpu()
-#         caffe.set_device(gpu_id)
-#         net = caffe.Net(prototxt, caffe.TEST, weights=weights)
-#         with open(outfile, 'ab') as tsvfile:
-#             writer = csv.DictWriter(tsvfile, delimiter = '\t', fieldnames = FIELDNAMES)   
-#             _t = {'misc' : Timer()}
-#             count = 0
-#             for im_file,image_id in image_ids:
-#                 if image_id in missing:
-#                     _t['misc'].tic()
-#                     row = get_detections_from_im(net, im_file, image_id)
-#                     # for k, v in row.items():
-#                     #     print(k, type(v))
-#                     # exit()
-#                     writer.writerow(row)
-#                     _t['misc'].toc()
-#                     if (count % 100) == 0:
-#                         print ('GPU {:d}: {:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
-#                               .format(gpu_id, count+1, len(missing), _t['misc'].average_time, 
-#                               _t['misc'].average_time*(len(missing)-count)/3600))
-#                     count += 1
+def load_image_ids(scannet_root):
+    ''' Load a list of (path,image_id tuples). Modify this to suit your data locations. '''
+    split = []
 
-# def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
-#     # First check if file exists, and if it is complete
-#     wanted_ids = set([image_id[1] for image_id in image_ids])
-#     found_ids = set()
-#     if os.path.exists(out_json):
-#         with open(out_json) as jsonfile:
-#             reader = json.load(jsonfile)
-#             for key in reader:
-#                 found_ids.add(key)
-#     missing = wanted_ids - found_ids
-#     if len(missing) == 0:
-#         print ('GPU {:d}: already completed {:d}'.format(gpu_id, len(image_ids)))
-#     else:
-#         print ('GPU {:d}: missing {:d}/{:d}'.format(gpu_id, len(missing), len(image_ids)))
-#     if len(missing) > 0:
-#         # caffe.set_mode_gpu()
-#         # caffe.set_device(gpu_id)
-#         caffe.set_mode_cpu()
-#         net = caffe.Net(prototxt, caffe.TEST, weights=weights)
+    scan_list = sorted(os.listdir(scannet_root))
+    for scan_id in scan_list:
+        image_root = os.path.join(scannet_root, scan_id, "color")
+        image_list = sorted(os.listdir(image_root))
+        for image_name in image_list:
+            image_id = image_name.split(".")[0] # e.g. 0.jpg
 
-#         jsonfile = open(out_json, "w")
-#         hdf5file = h5py.File(out_hdf5, "w", libver="latest")
+            image_path = os.path.join(image_root, image_name)
+            image_key = "{}-{}".format(scan_id, image_id) # e.g. scene0000_00-0
 
-#         results = {}
-#         _t = {'misc' : Timer()}
-#         count = 0
-#         for im_file, image_id in image_ids:
-#             if image_id in missing:
-#                 _t['misc'].tic()
-#                 detections, features = get_detections_from_im(net, im_file, image_id)
-#                 results[image_id] = detections
-#                 hdf5file.create_dataset(image_id, data=features)
-#                 _t['misc'].toc()
-#                 if (count % 100) == 0:
-#                     print ('GPU {:d}: {:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
-#                             .format(gpu_id, count+1, len(missing), _t['misc'].average_time, 
-#                             _t['misc'].average_time*(len(missing)-count)/3600))
-#                 count += 1
+            split.append((image_path, image_key))
 
-#         json.dump(results, jsonfile, indent=4)
+    return split
 
-def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
-    caffe.set_mode_gpu()
-    caffe.set_device(gpu_id)
-    # caffe.set_mode_cpu()
+# def get_detections_from_im(rpn, rcnn, im_file, conf_thresh=0.2):
 
-    rpn = caffe.Net(prototxt["rpn"], caffe.TEST, weights=weights)
-    rcnn = caffe.Net(prototxt["rcnn"], caffe.TEST, weights=weights)
+#     im = cv2.imread(im_file)
+#     # scores, boxes, attr_scores, rel_scores = im_detect(net, im)
+#     features, im_info, im_scales = feature_extract(rpn, im)
+#     scores, boxes, attr_scores, rel_scores = feature_detect(rcnn, im, features, im_info, im_scales)
 
+#     # Keep the original boxes, don't worry about the regresssion bbox outputs
+#     rois = rcnn.blobs['rois'].data.copy()
+#     # unscale back to raw image space
+#     blobs, im_scales = _get_blobs(im, None)
+
+#     cls_boxes = rois[:, 1:5] / im_scales[0]
+#     cls_prob = rcnn.blobs['cls_prob'].data
+#     pool5 = rcnn.blobs['pool5_flat'].data
+
+#     # Keep only the best detections
+#     max_conf = np.zeros((rois.shape[0]))
+#     for cls_ind in range(1,cls_prob.shape[1]):
+#         cls_scores = scores[:, cls_ind]
+#         dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32)
+#         keep = np.array(nms(dets, cfg.TEST.NMS))
+#         max_conf[keep] = np.where(cls_scores[keep] > max_conf[keep], cls_scores[keep], max_conf[keep])
+
+#     keep_boxes = np.where(max_conf >= conf_thresh)[0]
+#     if len(keep_boxes) < MIN_BOXES:
+#         keep_boxes = np.argsort(max_conf)[::-1][:MIN_BOXES]
+#     elif len(keep_boxes) > MAX_BOXES:
+#         keep_boxes = np.argsort(max_conf)[::-1][:MAX_BOXES]
+
+#     detections = {
+#         'image_h': int(np.size(im, 0)),
+#         'image_w': int(np.size(im, 1)),
+#         'num_boxes' : len(keep_boxes),
+#         'boxes': cls_boxes[keep_boxes],
+#     }
+#     features = pool5[keep_boxes]
+
+#     return detections, features
+
+def get_features_from_im(rpn, im_file):
+    im = cv2.imread(im_file)
+    features, im_info, im_scales = feature_extract(rpn, im)
+
+    return features, im_info, im_scales
+
+def get_detections_from_features(rcnn, features, im_file, im_info, im_scales, im_shapes, conf_thresh=0.2):
+    im = cv2.imread(im_file)
+    scores, boxes, attr_scores, rel_scores = feature_detect(rcnn, features, im_info, im_scales, im_shapes)
+
+    # Keep the original boxes, don't worry about the regresssion bbox outputs
+    rois = rcnn.blobs['rois'].data.copy()
+    # unscale back to raw image space
+    blobs, im_scales = _get_blobs(im, None)
+
+    cls_boxes = rois[:, 1:5] / im_scales[0]
+    cls_prob = rcnn.blobs['cls_prob'].data
+    pool5 = rcnn.blobs['pool5_flat'].data
+
+    # Keep only the best detections
+    max_conf = np.zeros((rois.shape[0]))
+    for cls_ind in range(1,cls_prob.shape[1]):
+        cls_scores = scores[:, cls_ind]
+        dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32)
+        keep = np.array(nms(dets, cfg.TEST.NMS))
+        max_conf[keep] = np.where(cls_scores[keep] > max_conf[keep], cls_scores[keep], max_conf[keep])
+
+    keep_boxes = np.where(max_conf >= conf_thresh)[0]
+    if len(keep_boxes) < MIN_BOXES:
+        keep_boxes = np.argsort(max_conf)[::-1][:MIN_BOXES]
+    elif len(keep_boxes) > MAX_BOXES:
+        keep_boxes = np.argsort(max_conf)[::-1][:MAX_BOXES]
+
+    detections = {
+        'image_h': int(np.size(im, 0)),
+        'image_w': int(np.size(im, 1)),
+        'num_boxes' : len(keep_boxes),
+        'boxes': cls_boxes[keep_boxes],
+    }
+    det_features = pool5[keep_boxes]
+
+    return detections, det_features
+
+def generate_features(rpn, image_ids, interm_hdf5):
+    print("generating features...")
+    intermfile = h5py.File(interm_hdf5, "w", libver="latest")
+    _t = {'misc' : Timer()}
+    count = 0
+    for im_file, image_id in image_ids:
+        _t['misc'].tic()
+        features, im_info, im_scales, im_shapes = get_features_from_im(rpn, im_file)
+        intermfile.create_dataset("{}_features".format(image_id), data=features)
+        intermfile.create_dataset("{}_im_info".format(image_id), data=im_info)
+        intermfile.create_dataset("{}_im_scales".format(image_id), data=im_scales)
+        intermfile.create_dataset("{}_im_shapes".format(image_id), data=im_shapes)
+        _t['misc'].toc()
+        if (count % 100) == 0:
+            print ('{:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
+                    .format(count+1, len(image_ids), _t['misc'].average_time, 
+                    _t['misc'].average_time*(len(image_ids)-count)/3600))
+        count += 1
+
+def generate_results(rcnn, image_ids, interm_hdf5, out_json, out_hdf5):
+    print("generating results from features...")
     jsonfile = open(out_json, "w")
     hdf5file = h5py.File(out_hdf5, "w", libver="latest")
+    intermfile = h5py.File(interm_hdf5, "r", libver="latest")
 
     results = {}
     _t = {'misc' : Timer()}
     count = 0
     for im_file, image_id in image_ids:
         _t['misc'].tic()
-        # detections, features = get_detections_from_im(net, im_file, image_id)
-        detections, features = get_detections_from_im(rpn, rcnn, im_file)
+        features = intermfile["{}_features".format(image_id)][()]
+        im_info = intermfile["{}_im_info".format(image_id)][()]
+        im_scales = intermfile["{}_im_scales".format(image_id)][()]
+        im_shapes = intermfile["{}_im_shapes".format(image_id)][()]
+        detections, features = get_detections_from_features(rcnn, features, im_file, im_info, im_scales, im_shapes)
         results[image_id] = detections
         hdf5file.create_dataset(image_id, data=features)
         _t['misc'].toc()
         if (count % 100) == 0:
-            print ('GPU {:d}: {:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
-                    .format(gpu_id, count+1, len(image_ids), _t['misc'].average_time, 
+            print ('{:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
+                    .format(count+1, len(image_ids), _t['misc'].average_time, 
                     _t['misc'].average_time*(len(image_ids)-count)/3600))
         count += 1
 
     json.dump(results, jsonfile, indent=4)
 
-# def merge_jsons(json_files, outname):
-#     outfile = "{}.json".format(outname)
-#     results = {}
-#     with open(outfile, 'w') as jsonfile:
-#         for infile in json_files:
-#             with open(infile) as json_in_file:
-#                 results = {**results, **json.load(json_in_file)}
-
-#         json.dump(results, jsonfile, indent=4)        
-                      
-# def merge_hdf5s(hdf5_files, outname):
-#     outfile = "{}.hdf5".format(outname)
-#     with h5py.File(outfile, "w", libver="latest") as hdf5file:
-#         for infile in hdf5_files:
-#             with h5py.File(infile, "r", libver="latest") as hdf5_in_file:
-#                 for key in hdf5_in_file:
-#                     features = hdf5_in_file[key][()]
-#                     hdf5file.create_dataset(key, data=features)
-
-
 if __name__ == '__main__':
 
     args = parse_args()
-
-    # print('Called with args:')
-    # print(args)
 
     if args.cfg_file is not None:
         cfg_from_file(args.cfg_file)
@@ -287,45 +234,22 @@ if __name__ == '__main__':
         cfg_from_list(args.set_cfgs)
 
     gpu_id = int(args.gpu_id)
-    # gpu_list = gpu_id.split(',')
-    # gpus = [int(i) for i in gpu_list]
-
-    # print('Using config:')
-    # pprint.pprint(cfg)
-    # assert cfg.TEST.HAS_RPN
 
     image_ids = load_image_ids(args.scannet_root)
-    # random.seed(10)
-    # random.shuffle(image_ids)
-    # # Split image ids between gpus
-    # image_ids = [image_ids[i::len(gpus)] for i in range(len(gpus))]
-    
-    # caffe.init_log()
-    # caffe.log('Using devices %s' % str(gpus))
-    # procs = []    
-
+  
     prototxt = {
         "rpn": args.rpn,
         "rcnn": args.rcnn
     }
-    
-    out_json = '%s.json' % (args.outname)
-    out_hdf5 = '%s.hdf5' % (args.outname)
-    generate_results(gpu_id, prototxt, args.caffemodel, image_ids, out_json, out_hdf5)
+    caffe.set_mode_gpu()
+    caffe.set_device(gpu_id)
 
-    # for i,gpu_id in enumerate(gpus):
-    #     out_json = '%s.%d.json' % (args.outname, gpu_id)
-    #     out_hdf5 = '%s.%d.hdf5' % (args.outname, gpu_id)
-    #     p = Process(target=generate_results,
-    #                 args=(gpu_id, args.prototxt, args.caffemodel, image_ids[i], out_json, out_hdf5))
-    #     p.daemon = True
-    #     p.start()
-    #     procs.append(p)
-    # for p in procs:
-    #     p.join()            
-                  
-    # # post-processing
-    # json_files = glob("{}.*.json".format(args.outname))
-    # merge_jsons(json_files, args.outname)
-    # hdf5_files = glob("{}.*.hdf5".format(args.outname))
-    # merge_hdf5s(hdf5_files, args.outname)
+    rpn = caffe.Net(prototxt["rpn"], caffe.TEST, weights=args.caffemodel)
+    rcnn = caffe.Net(prototxt["rcnn"], caffe.TEST, weights=args.caffemodel)
+
+    interm_hdf5 = "{}.interm.hdf5".format(args.outname) # intermediate features
+    if not os.path.exists(interm_hdf5): generate_features(rpn, image_ids, interm_hdf5)
+
+    out_json = '{}.json'.format(args.outname)
+    out_hdf5 = '{}.hdf5'.format(args.outname)
+    generate_results(rcnn, image_ids, interm_hdf5, out_json, out_hdf5)
