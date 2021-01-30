@@ -121,7 +121,7 @@ def parse_args():
                         default="experiments/cfgs/faster_rcnn_end2end_resnet.yml", type=str)
     parser.add_argument('--scannet_root', dest='scannet_root',
                         help='dataset to use',
-                        default='/cluster/sorona/dchen/ScanNet_frames', type=str)
+                        default='/rdata/ScanNet/ScanNet_frames', type=str)
     parser.add_argument('--set', dest='set_cfgs',
                         help='set config keys', default=None,
                         nargs=argparse.REMAINDER)

@@ -3,9 +3,7 @@ import subprocess
 
 from tqdm import tqdm
 
-TAR = "davech2y@feronis.vc.in.tum.de"
-
-SRC_ROOT = "/cluster/sorona/dchen/ScanNet_frames"
+SRC_ROOT = "/rdata/ScanNet_frames"
 TAR_ROOT = "/mnt/raid/davech2y/ScanNet_frames"
 
 scan_list = sorted(os.listdir(SRC_ROOT))
