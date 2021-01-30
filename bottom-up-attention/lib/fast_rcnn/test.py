@@ -227,7 +227,7 @@ def feature_extract(net, im, boxes=None, force_boxes=False):
         boxes = boxes[index, :]
 
     im_blob = blobs['data']
-    blobs['im_info'] = np.array(
+    im_info = np.array(
         [[im_blob.shape[2], im_blob.shape[3], im_scales[0]]],
         dtype=np.float32)
 
@@ -248,7 +248,69 @@ def feature_extract(net, im, boxes=None, force_boxes=False):
 
     im_features = net.blobs['res4b22'].data
 
-    return im_features
+    return im_features, im_info, im_scales
+
+def feature_detect(net, im, im_features, im_info, im_scales):
+    """Detect object classes in an image given object proposals.
+
+    Arguments:
+        net (caffe.Net): Fast R-CNN network to use
+        im (ndarray): color image to test (in BGR order)
+        boxes (ndarray): R x 4 array of object proposals or None (for RPN)
+
+    Returns:
+        scores (ndarray): R x K array of object class scores (K includes
+            background as object category 0)
+        boxes (ndarray): R x (4*K) array of predicted bounding boxes
+        attr_scores (ndarray): R x M array of attribute class scores
+    """
+
+    # do forward
+    forward_kwargs = {
+        'data': im_features.astype(np.float32, copy=False),
+        'im_info': im_info.astype(np.float32, copy=False)
+    }
+    blobs_out = net.forward(**forward_kwargs)
+
+    if cfg.TEST.HAS_RPN:
+        assert len(im_scales) == 1, "Only single-image batch implemented"
+        rois = net.blobs['rois'].data.copy()
+        # unscale back to raw image space
+        boxes = rois[:, 1:5] / im_scales[0]
+
+    if cfg.TEST.SVM:
+        # use the raw scores before softmax under the assumption they
+        # were trained as linear SVMs
+        scores = net.blobs['cls_score'].data
+    else:
+        # use softmax estimated probabilities
+        scores = blobs_out['cls_prob']
+
+    if cfg.TEST.BBOX_REG:
+        # Apply bounding-box regression deltas
+        box_deltas = blobs_out['bbox_pred']
+        pred_boxes = bbox_transform_inv(boxes, box_deltas)
+        pred_boxes = clip_boxes(pred_boxes, im.shape)
+    else:
+        # Simply repeat the boxes, once for each class
+        pred_boxes = np.tile(boxes, (1, scores.shape[1]))
+
+    if cfg.DEDUP_BOXES > 0 and not cfg.TEST.HAS_RPN:
+        # Map scores and predictions back to the original set of boxes
+        scores = scores[inv_index, :]
+        pred_boxes = pred_boxes[inv_index, :]
+        
+    if 'attr_prob' in net.blobs:
+        attr_scores = blobs_out['attr_prob']
+    else:
+        attr_scores = None
+        
+    if 'rel_prob' in net.blobs:
+        rel_scores = blobs_out['rel_prob']
+    else:
+        rel_scores = None
+
+    return scores, pred_boxes, attr_scores, rel_scores
 
 def vis_detections(im, class_name, dets, thresh=0.3, filename='vis.png'):
     """Visual debugging of detections."""

@@ -1,3 +1,18 @@
+name: "ResNet-101"
+input: "res4b22"
+input_shape {
+  dim: 1
+  dim: 1024
+  dim: 38
+  dim: 50
+}
+
+input: "im_info"
+input_shape {
+  dim: 1
+  dim: 3
+}
+
 #========= RPN ============
 
 layer {

@@ -7,12 +7,6 @@ input_shape {
   dim: 224
 }
 
-input: "im_info"
-input_shape {
-  dim: 1
-  dim: 3
-}
-
 # ------------------------ conv1 -----------------------------
 layer {
     bottom: "data"
