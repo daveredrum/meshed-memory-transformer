@@ -28,6 +28,7 @@ import csv
 from multiprocessing import Process
 import random
 import json
+import h5py
 from glob import glob
 
 csv.field_size_limit(sys.maxsize)
@@ -87,14 +88,25 @@ def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
     elif len(keep_boxes) > MAX_BOXES:
         keep_boxes = np.argsort(max_conf)[::-1][:MAX_BOXES]
    
-    return {
-        'image_id': image_id.encode(), # str to bytes
-        'image_h': np.size(im, 0),
-        'image_w': np.size(im, 1),
+    # return {
+    #     'image_id': image_id.encode(), # str to bytes
+    #     'image_h': np.size(im, 0),
+    #     'image_w': np.size(im, 1),
+    #     'num_boxes' : len(keep_boxes),
+    #     'boxes': base64.b64encode(cls_boxes[keep_boxes]),
+    #     'features': base64.b64encode(pool5[keep_boxes])
+    # }
+
+    detections = {
+        'image_h': int(np.size(im, 0)),
+        'image_w': int(np.size(im, 1)),
         'num_boxes' : len(keep_boxes),
-        'boxes': base64.b64encode(cls_boxes[keep_boxes]),
-        'features': base64.b64encode(pool5[keep_boxes])
-    }   
+        'boxes': cls_boxes[keep_boxes].tolist(),
+        'features': pool5[keep_boxes]
+    }
+    features = pool5[keep_boxes]
+
+    return detections, features
 
 
 def parse_args():
@@ -110,7 +122,7 @@ def parse_args():
     parser.add_argument('--net', dest='caffemodel',
                         help='model to use',
                         default="data/faster_rcnn_models/resnet101_faster_rcnn_final.caffemodel", type=str)
-    parser.add_argument('--out', dest='outfile',
+    parser.add_argument('--out', dest='outname',
                         help='output filepath',
                         default=None, type=str)
     parser.add_argument('--cfg', dest='cfg_file',
@@ -131,15 +143,52 @@ def parse_args():
     return args
 
     
-def generate_tsv(gpu_id, prototxt, weights, image_ids, outfile):
+# def generate_tsv(gpu_id, prototxt, weights, image_ids, outfile):
+#     # First check if file exists, and if it is complete
+#     wanted_ids = set([image_id[1] for image_id in image_ids])
+#     found_ids = set()
+#     if os.path.exists(outfile):
+#         with open(outfile) as tsvfile:
+#             reader = csv.DictReader(tsvfile, delimiter='\t', fieldnames = FIELDNAMES)
+#             for item in reader:
+#                 found_ids.add(item['image_id'])
+#     missing = wanted_ids - found_ids
+#     if len(missing) == 0:
+#         print ('GPU {:d}: already completed {:d}'.format(gpu_id, len(image_ids)))
+#     else:
+#         print ('GPU {:d}: missing {:d}/{:d}'.format(gpu_id, len(missing), len(image_ids)))
+#     if len(missing) > 0:
+#         caffe.set_mode_gpu()
+#         caffe.set_device(gpu_id)
+#         net = caffe.Net(prototxt, caffe.TEST, weights=weights)
+#         with open(outfile, 'ab') as tsvfile:
+#             writer = csv.DictWriter(tsvfile, delimiter = '\t', fieldnames = FIELDNAMES)   
+#             _t = {'misc' : Timer()}
+#             count = 0
+#             for im_file,image_id in image_ids:
+#                 if image_id in missing:
+#                     _t['misc'].tic()
+#                     row = get_detections_from_im(net, im_file, image_id)
+#                     # for k, v in row.items():
+#                     #     print(k, type(v))
+#                     # exit()
+#                     writer.writerow(row)
+#                     _t['misc'].toc()
+#                     if (count % 100) == 0:
+#                         print ('GPU {:d}: {:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
+#                               .format(gpu_id, count+1, len(missing), _t['misc'].average_time, 
+#                               _t['misc'].average_time*(len(missing)-count)/3600))
+#                     count += 1
+
+def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
     # First check if file exists, and if it is complete
     wanted_ids = set([image_id[1] for image_id in image_ids])
     found_ids = set()
-    if os.path.exists(outfile):
-        with open(outfile) as tsvfile:
-            reader = csv.DictReader(tsvfile, delimiter='\t', fieldnames = FIELDNAMES)
-            for item in reader:
-                found_ids.add(item['image_id'])
+    if os.path.exists(out_json):
+        with open(out_json) as jsonfile:
+            reader = json.load(jsonfile)
+            for key in reader:
+                found_ids.add(key)
     missing = wanted_ids - found_ids
     if len(missing) == 0:
         print ('GPU {:d}: already completed {:d}'.format(gpu_id, len(image_ids)))
@@ -149,43 +198,48 @@ def generate_tsv(gpu_id, prototxt, weights, image_ids, outfile):
         caffe.set_mode_gpu()
         caffe.set_device(gpu_id)
         net = caffe.Net(prototxt, caffe.TEST, weights=weights)
-        with open(outfile, 'ab') as tsvfile:
-            writer = csv.DictWriter(tsvfile, delimiter = '\t', fieldnames = FIELDNAMES)   
-            _t = {'misc' : Timer()}
-            count = 0
-            for im_file,image_id in image_ids:
-                if image_id in missing:
-                    _t['misc'].tic()
-                    row = get_detections_from_im(net, im_file, image_id)
-                    # for k, v in row.items():
-                    #     print(k, type(v))
-                    # exit()
-                    writer.writerow(row)
-                    _t['misc'].toc()
-                    if (count % 100) == 0:
-                        print ('GPU {:d}: {:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
-                              .format(gpu_id, count+1, len(missing), _t['misc'].average_time, 
-                              _t['misc'].average_time*(len(missing)-count)/3600))
-                    count += 1
 
-                    
+        jsonfile = open(out_json, "w")
+        hdf5file = h5py.File(out_hdf5, "w", libver="latest")
 
+        results = {}
+        _t = {'misc' : Timer()}
+        count = 0
+        for im_file, image_id in image_ids:
+            if image_id in missing:
+                _t['misc'].tic()
+                detections, features = get_detections_from_im(net, im_file, image_id)
+                results[image_id] = detections
+                hdf5file.create_dataset(image_id, data=features)
+                _t['misc'].toc()
+                if (count % 100) == 0:
+                    print ('GPU {:d}: {:d}/{:d} {:.3f}s (projected finish: {:.2f} hours)' \
+                            .format(gpu_id, count+1, len(missing), _t['misc'].average_time, 
+                            _t['misc'].average_time*(len(missing)-count)/3600))
+                count += 1
 
-def merge_tsvs(tsv_files, outfile):
-    with open(outfile, 'ab') as tsvfile:
-        writer = csv.DictWriter(tsvfile, delimiter = '\t', fieldnames = FIELDNAMES)   
-        
-        for infile in tsv_files:
-            with open(infile) as tsv_in_file:
-                reader = csv.DictReader(tsv_in_file, delimiter='\t', fieldnames = FIELDNAMES)
-                for item in reader:
-                    try:
-                      writer.writerow(item)
-                    except Exception as e:
-                      print (e)                      
+        json.dump(results, jsonfile, indent=4)
 
+def merge_jsons(json_files, outname):
+    outfile = "{}.json".format(outname)
+    results = {}
+    with open(outfile, 'w') as jsonfile:
+        for infile in json_files:
+            with open(infile) as json_in_file:
+                results = {**results, **json.load(json_in_file)}
+
+        json.dump(results, jsonfile, indent=4)        
                       
-     
+def merge_hdf5s(hdf5_files, outname):
+    outfile = "{}.hdf5".format(outname)
+    with h5py.File(outfile, "w", libver="latest") as hdf5file:
+        for infile in hdf5_files:
+            with h5py.File(infile, "r", libver="latest") as hdf5_in_file:
+                for key in hdf5_in_file:
+                    features = hdf5_in_file[key][()]
+                    hdf5file.create_dataset(key, data=features)
+
+
 if __name__ == '__main__':
 
     args = parse_args()
@@ -217,9 +271,10 @@ if __name__ == '__main__':
     procs = []    
     
     for i,gpu_id in enumerate(gpus):
-        outfile = '%s.%d' % (args.outfile, gpu_id)
-        p = Process(target=generate_tsv,
-                    args=(gpu_id, args.prototxt, args.caffemodel, image_ids[i], outfile))
+        out_json = '%s.%d.json' % (args.outname, gpu_id)
+        out_hdf5 = '%s.%d.hdf5' % (args.outname, gpu_id)
+        p = Process(target=generate_results,
+                    args=(gpu_id, args.prototxt, args.caffemodel, image_ids[i], out_json, out_hdf5))
         p.daemon = True
         p.start()
         procs.append(p)
@@ -227,5 +282,7 @@ if __name__ == '__main__':
         p.join()            
                   
     # post-processing
-    tsv_files = glob("{}.*".format(args.outfile))
-    merge_tsvs(tsv_files, args.outfile)
+    json_files = glob("{}.*.json".format(args.outname))
+    merge_jsons(json_files, args.outname)
+    hdf5_files = glob("{}.*.hdf5".format(args.outname))
+    merge_hdf5s(hdf5_files, args.outname)
