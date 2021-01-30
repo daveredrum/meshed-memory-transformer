@@ -136,13 +136,13 @@ def parse_args():
     
 def generate_tsv(gpu_id, prototxt, weights, image_ids, outfile):
     # First check if file exists, and if it is complete
-    wanted_ids = set([int(image_id[1]) for image_id in image_ids])
+    wanted_ids = set([image_id[1] for image_id in image_ids])
     found_ids = set()
     if os.path.exists(outfile):
         with open(outfile) as tsvfile:
             reader = csv.DictReader(tsvfile, delimiter='\t', fieldnames = FIELDNAMES)
             for item in reader:
-                found_ids.add(int(item['image_id']))
+                found_ids.add(item['image_id'])
     missing = wanted_ids - found_ids
     if len(missing) == 0:
         print ('GPU {:d}: already completed {:d}'.format(gpu_id, len(image_ids)))
@@ -157,7 +157,7 @@ def generate_tsv(gpu_id, prototxt, weights, image_ids, outfile):
             _t = {'misc' : Timer()}
             count = 0
             for im_file,image_id in image_ids:
-                if int(image_id) in missing:
+                if image_id in missing:
                     _t['misc'].tic()
                     writer.writerow(get_detections_from_im(net, im_file, image_id))
                     _t['misc'].toc()
