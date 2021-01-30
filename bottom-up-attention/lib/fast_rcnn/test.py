@@ -265,8 +265,8 @@ def feature_detect(net, im, im_features, im_info, im_scales):
         attr_scores (ndarray): R x M array of attribute class scores
     """
 
-    print(im_features.shape, im_info.shape)
-    exit()
+    # print(im_features.shape, im_info.shape)
+    # exit()
 
     # do forward
     forward_kwargs = {
