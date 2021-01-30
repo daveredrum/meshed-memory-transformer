@@ -137,9 +137,9 @@ def load_image_ids(scannet_root):
 
 def get_features_from_im(rpn, im_file):
     im = cv2.imread(im_file)
-    features, im_info, im_scales = feature_extract(rpn, im)
+    features, im_info, im_scales, im_shapes = feature_extract(rpn, im)
 
-    return features, im_info, im_scales
+    return features, im_info, im_scales, im_shapes
 
 def get_detections_from_features(rcnn, features, im_file, im_info, im_scales, im_shapes, conf_thresh=0.2):
     im = cv2.imread(im_file)
