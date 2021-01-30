@@ -60,7 +60,7 @@ def load_image_ids(scannet_root):
     return split
 
     
-def get_detections_from_im(net, im_file, image_id, conf_thresh=0.2):
+def get_detections_from_im(net, im_file, image_id, conf_thresh=0.4):
 
     im = cv2.imread(im_file)
     scores, boxes, attr_scores, rel_scores = im_detect(net, im)
@@ -249,32 +249,32 @@ def generate_results(gpu_id, prototxt, weights, image_ids, out_json, out_hdf5):
 
     json.dump(results, jsonfile, indent=4)
 
-def merge_jsons(json_files, outname):
-    outfile = "{}.json".format(outname)
-    results = {}
-    with open(outfile, 'w') as jsonfile:
-        for infile in json_files:
-            with open(infile) as json_in_file:
-                results = {**results, **json.load(json_in_file)}
+# def merge_jsons(json_files, outname):
+#     outfile = "{}.json".format(outname)
+#     results = {}
+#     with open(outfile, 'w') as jsonfile:
+#         for infile in json_files:
+#             with open(infile) as json_in_file:
+#                 results = {**results, **json.load(json_in_file)}
 
-        json.dump(results, jsonfile, indent=4)        
+#         json.dump(results, jsonfile, indent=4)        
                       
-def merge_hdf5s(hdf5_files, outname):
-    outfile = "{}.hdf5".format(outname)
-    with h5py.File(outfile, "w", libver="latest") as hdf5file:
-        for infile in hdf5_files:
-            with h5py.File(infile, "r", libver="latest") as hdf5_in_file:
-                for key in hdf5_in_file:
-                    features = hdf5_in_file[key][()]
-                    hdf5file.create_dataset(key, data=features)
+# def merge_hdf5s(hdf5_files, outname):
+#     outfile = "{}.hdf5".format(outname)
+#     with h5py.File(outfile, "w", libver="latest") as hdf5file:
+#         for infile in hdf5_files:
+#             with h5py.File(infile, "r", libver="latest") as hdf5_in_file:
+#                 for key in hdf5_in_file:
+#                     features = hdf5_in_file[key][()]
+#                     hdf5file.create_dataset(key, data=features)
 
 
 if __name__ == '__main__':
 
     args = parse_args()
 
-    print('Called with args:')
-    print(args)
+    # print('Called with args:')
+    # print(args)
 
     if args.cfg_file is not None:
         cfg_from_file(args.cfg_file)
@@ -282,12 +282,12 @@ if __name__ == '__main__':
         cfg_from_list(args.set_cfgs)
 
     gpu_id = args.gpu_id
-    gpu_list = gpu_id.split(',')
-    gpus = [int(i) for i in gpu_list]
+    # gpu_list = gpu_id.split(',')
+    # gpus = [int(i) for i in gpu_list]
 
-    print('Using config:')
-    pprint.pprint(cfg)
-    assert cfg.TEST.HAS_RPN
+    # print('Using config:')
+    # pprint.pprint(cfg)
+    # assert cfg.TEST.HAS_RPN
 
     image_ids = load_image_ids(args.scannet_root)
     # random.seed(10)
