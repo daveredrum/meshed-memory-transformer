@@ -29,6 +29,7 @@ from multiprocessing import Process
 import random
 import json
 import h5py
+import pickle
 from glob import glob
 
 csv.field_size_limit(sys.maxsize)
@@ -197,9 +198,9 @@ def generate_features(rpn, image_ids, interm_hdf5):
                     _t['misc'].average_time*(len(image_ids)-count)/3600))
         count += 1
 
-def generate_results(rcnn, image_ids, interm_hdf5, out_json, out_hdf5):
+def generate_results(rcnn, image_ids, interm_hdf5, out_p, out_hdf5):
     print("generating results from features...")
-    jsonfile = open(out_json, "w")
+    pfile = open(out_p, "wb")
     hdf5file = h5py.File(out_hdf5, "w", libver="latest")
     intermfile = h5py.File(interm_hdf5, "r", libver="latest")
 
@@ -222,7 +223,7 @@ def generate_results(rcnn, image_ids, interm_hdf5, out_json, out_hdf5):
                     _t['misc'].average_time*(len(image_ids)-count)/3600))
         count += 1
 
-    json.dump(results, jsonfile, indent=4)
+    pickle.dump(results, pfile)
 
 if __name__ == '__main__':
 
@@ -254,6 +255,6 @@ if __name__ == '__main__':
         exit()
 
     rcnn = caffe.Net(prototxt["rcnn"], caffe.TEST, weights=args.caffemodel)
-    out_json = '{}.json'.format(args.outname)
+    out_p = '{}.p'.format(args.outname)
     out_hdf5 = '{}.hdf5'.format(args.outname)
-    generate_results(rcnn, image_ids, interm_hdf5, out_json, out_hdf5)
+    generate_results(rcnn, image_ids, interm_hdf5, out_p, out_hdf5)
