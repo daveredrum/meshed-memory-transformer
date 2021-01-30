@@ -299,8 +299,8 @@ if __name__ == '__main__':
     # caffe.log('Using devices %s' % str(gpus))
     # procs = []    
     
-    out_json = '%s.%d.json' % (args.outname, gpu_id)
-    out_hdf5 = '%s.%d.hdf5' % (args.outname, gpu_id)
+    out_json = '%s.json' % (args.outname)
+    out_hdf5 = '%s.hdf5' % (args.outname)
     generate_results(gpu_id, args.prototxt, args.caffemodel, image_ids, out_json, out_hdf5)
 
     # for i,gpu_id in enumerate(gpus):
