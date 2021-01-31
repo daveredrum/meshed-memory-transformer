@@ -31,9 +31,10 @@ def predict_captions(model, dataloader, text_field):
         for it, (images, image_ids) in enumerate(iter(dataloader)):
             images = images.to(device)
             with torch.no_grad():
-                out, _ = model.beam_search(images, 50, text_field.vocab.stoi['<eos>'], 5, out_size=1)
-            caps_gen = text_field.decode(out, join_words=True)
+                out, _ = model.beam_search(images, 30, text_field.vocab.stoi['<eos>'], 5, out_size=1)
+            caps_gen = text_field.decode(out, join_words=False)
             for id_i, cap_i in zip(image_ids, caps_gen):
+                cap_i = ' '.join([k for k, _ in itertools.groupby(cap_i)]).strip()
                 scan_id, frame_id = id_i[0].split("-")
 
                 if scan_id not in gen: gen[scan_id] = {}
