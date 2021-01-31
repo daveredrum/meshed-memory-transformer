@@ -96,46 +96,6 @@ def load_image_ids(scannet_root):
 
     return split
 
-# def get_detections_from_im(rpn, rcnn, im_file, conf_thresh=0.2):
-
-#     im = cv2.imread(im_file)
-#     # scores, boxes, attr_scores, rel_scores = im_detect(net, im)
-#     features, im_info, im_scales = feature_extract(rpn, im)
-#     scores, boxes, attr_scores, rel_scores = feature_detect(rcnn, im, features, im_info, im_scales)
-
-#     # Keep the original boxes, don't worry about the regresssion bbox outputs
-#     rois = rcnn.blobs['rois'].data.copy()
-#     # unscale back to raw image space
-#     blobs, im_scales = _get_blobs(im, None)
-
-#     cls_boxes = rois[:, 1:5] / im_scales[0]
-#     cls_prob = rcnn.blobs['cls_prob'].data
-#     pool5 = rcnn.blobs['pool5_flat'].data
-
-#     # Keep only the best detections
-#     max_conf = np.zeros((rois.shape[0]))
-#     for cls_ind in range(1,cls_prob.shape[1]):
-#         cls_scores = scores[:, cls_ind]
-#         dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32)
-#         keep = np.array(nms(dets, cfg.TEST.NMS))
-#         max_conf[keep] = np.where(cls_scores[keep] > max_conf[keep], cls_scores[keep], max_conf[keep])
-
-#     keep_boxes = np.where(max_conf >= conf_thresh)[0]
-#     if len(keep_boxes) < MIN_BOXES:
-#         keep_boxes = np.argsort(max_conf)[::-1][:MIN_BOXES]
-#     elif len(keep_boxes) > MAX_BOXES:
-#         keep_boxes = np.argsort(max_conf)[::-1][:MAX_BOXES]
-
-#     detections = {
-#         'image_h': int(np.size(im, 0)),
-#         'image_w': int(np.size(im, 1)),
-#         'num_boxes' : len(keep_boxes),
-#         'boxes': cls_boxes[keep_boxes],
-#     }
-#     features = pool5[keep_boxes]
-
-#     return detections, features
-
 def get_features_from_im(rpn, im_file):
     im = cv2.imread(im_file)
     features, im_info, im_scales, im_shapes = feature_extract(rpn, im)
