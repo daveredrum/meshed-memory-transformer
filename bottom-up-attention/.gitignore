@@ -105,3 +105,6 @@ MANIFEST-*
 # DB
 *.hdf5
 *.p
+
+# detections
+scannet_detections
