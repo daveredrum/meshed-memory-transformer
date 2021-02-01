@@ -28,7 +28,8 @@ if __name__ == "__main__":
         os.makedirs(os.path.join(args.out_dir, scan_id), exist_ok=True)
         for image_name in image_list:
             image_id = image_name.split(".")[0]
-            raw_img = cv2.imread(image_name)
+            image_path = os.path.join(image_root, image_name)
+            raw_img = cv2.imread(image_path)
             raw_img = cv2.cvtColor(raw_img, cv2.COLOR_BGR2RGB)
 
             plt.switch_backend("agg")
