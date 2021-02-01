@@ -166,8 +166,6 @@ def get_detections_from_features(rcnn, features, im_file, im_info, im_scales, im
         'labels': labels
     }
     det_features = pool5[keep_boxes]
-    print(labels)
-    exit()
 
     return detections, det_features
 
