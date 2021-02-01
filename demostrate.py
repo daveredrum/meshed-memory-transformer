@@ -27,7 +27,7 @@ if __name__ == "__main__":
     scan_list = sorted(list(predictions.keys()))
 
     doc = Element("html")
-    table = SubElement(doc, "table", attrib={"border": "0"})
+    table = SubElement(doc, "table", attrib={"style": "border: 1px solid black"})
     for scan_id in scan_list:
         image_ids = sorted([int(k) for k in predictions[scan_id].keys()]) # int
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
                 des = des_list[i]
 
                 if r == 0: # text
-                    td = create_text_cell(text, attr={"style": "background-color: #f0f8ff"})
+                    td = create_text_cell(text, attr={"style": "background-color: #D6EAF8"})
                     tr.append(td)
                 elif r == 1: # image
                     td = create_image_cell({"src": image, "height": "240", "loading": "lazy"})
