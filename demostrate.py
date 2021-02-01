@@ -5,13 +5,14 @@ import argparse
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 
 def create_text_cell(text, attr={}):
-    td = Element("td", attrib=attr)
+    default_attr = {"style": "border: 1px solid black"}
+    td = Element("td", attrib={**attr, **default_attr})
     td.text = text
 
     return td
 
 def create_image_cell(attr):
-    td = Element("td")
+    td = Element("td", attrib={"style": "border: 1px solid black"})
     img = SubElement(td, "img", attrib=attr)
 
     return td
@@ -42,7 +43,7 @@ if __name__ == "__main__":
         num_iters = len(image_list)
         
         for r in range(3):
-            tr = SubElement(table, "tr")
+            tr = SubElement(table, "tr", attrib={"style": "border: 1px solid black"})
             for i in range(num_iters):
                 text = text_list[i]
                 image = image_list[i]
