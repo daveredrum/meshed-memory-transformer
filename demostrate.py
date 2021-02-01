@@ -14,7 +14,7 @@ def create_text_cell(text):
 
 def create_image_cell(image_path):
     td = Element("td")
-    img = SubElement(td, attrib={"src": image_path, "width": "300px"})
+    img = SubElement(td, "img", attrib={"src": image_path, "width": "300px"})
 
     return td
 
