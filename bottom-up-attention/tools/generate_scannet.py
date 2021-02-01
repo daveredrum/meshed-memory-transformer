@@ -156,7 +156,7 @@ def get_detections_from_features(rcnn, features, im_file, im_info, im_scales, im
         if attr_conf[i] > attr_thresh:
             cls = ATTRIBUTES[attr[i]+1] + " " + cls
 
-        labels.append(labels)
+        labels.append(cls)
 
     detections = {
         'image_h': int(np.size(im, 0)),
