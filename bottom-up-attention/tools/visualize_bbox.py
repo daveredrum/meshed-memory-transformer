@@ -53,7 +53,7 @@ if __name__ == "__main__":
                     plt.Rectangle((bbox[0], bbox[1]),
                                 bbox[2] - bbox[0],
                                 bbox[3] - bbox[1], fill=False,
-                                edgecolor='red', linewidth=2, alpha=0.5)
+                                edgecolor='red', linewidth=5)
             )
 
             plt.savefig(os.path.join(args.out_dir, scan_id, "{}.png".format(image_id)), bbox_inches="tight")
