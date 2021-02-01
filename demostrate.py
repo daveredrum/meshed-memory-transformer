@@ -59,5 +59,7 @@ if __name__ == "__main__":
                     td = create_text_cell(text)
                     tr.append(td)
 
+        break
+
     with open("predictions.html", "w") as f:
         doc.write(f)
