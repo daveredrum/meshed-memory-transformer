@@ -11,7 +11,7 @@ def create_text_cell(text, attr={}):
     return td
 
 def create_image_cell(attr):
-    td = Element("td", attrib={"style": "border: 1px solid black"})
+    td = Element("td")
     img = SubElement(td, "img", attrib=attr)
 
     return td
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     scan_list = sorted(list(predictions.keys()))
 
     doc = Element("html")
-    table = SubElement(doc, "table", attrib={"style": "border: 1px solid black"})
+    table = SubElement(doc, "table")
     for scan_id in scan_list:
         image_ids = sorted([int(k) for k in predictions[scan_id].keys()]) # int
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         num_iters = len(image_list)
         
         for r in range(3):
-            tr = SubElement(table, "tr", attrib={"style": "border: 1px solid black"})
+            tr = SubElement(table, "tr")
             for i in range(num_iters):
                 text = text_list[i]
                 image = image_list[i]
