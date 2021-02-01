@@ -4,8 +4,8 @@ import argparse
 
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 
-def create_text_cell(text):
-    td = Element("td")
+def create_text_cell(text, attr={}):
+    td = Element("td", attrib=attr)
     td.text = text
 
     return td
@@ -49,7 +49,7 @@ if __name__ == "__main__":
                 des = des_list[i]
 
                 if r == 0: # text
-                    td = create_text_cell(text)
+                    td = create_text_cell(text, attr={"style": "background-color=#fff5c0"})
                     tr.append(td)
                 elif r == 1: # image
                     td = create_image_cell({"src": image, "height": "240", "loading": "lazy"})
@@ -57,8 +57,6 @@ if __name__ == "__main__":
                 else: # des
                     td = create_text_cell(des)
                     tr.append(td)
-
-        break
 
     with open("predictions.html", "w") as f:
         tree = ElementTree(doc)
