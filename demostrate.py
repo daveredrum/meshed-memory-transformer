@@ -49,7 +49,7 @@ if __name__ == "__main__":
                 des = des_list[i]
 
                 if r == 0: # text
-                    td = create_text_cell(text, attr={"style": "background-color=#fff5c0"})
+                    td = create_text_cell(text, attr={"style": "background-color: #f0f8ff"})
                     tr.append(td)
                 elif r == 1: # image
                     td = create_image_cell({"src": image, "height": "240", "loading": "lazy"})
