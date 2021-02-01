@@ -63,4 +63,5 @@ if __name__ == "__main__":
         break
 
     with open("predictions.html", "w") as f:
-        doc.write(f)
+        tree = ElementTree(doc)
+        tree.write(f)
