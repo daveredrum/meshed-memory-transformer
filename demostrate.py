@@ -4,8 +4,6 @@ import argparse
 
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 
-PREVIEW_ROOT = "/mnt/raid/davech2y/ScanNet_previews/"
-
 def create_text_cell(text):
     td = Element("td")
     td.text = text
@@ -21,7 +19,8 @@ def create_image_cell(image_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--predictions', type=str, default="./predictions.json")
-    parser.add_argument('--image_dir', type=str)
+    parser.add_argument('--preview_dir', type=str, default="./ScanNet_previews")
+    parser.add_argument('--image_dir', type=str, default="./ScanNet")
     args = parser.parse_args()
 
     predictions = json.load(open(args.predictions))
@@ -38,7 +37,7 @@ if __name__ == "__main__":
         des_list = [""]
         des_list += [predictions[scan_id][str(image_id)] for image_id in image_ids]
 
-        image_list = [os.path.join(PREVIEW_ROOT, "{}_vh_clean_2.png".format(scan_id))]
+        image_list = [os.path.join(args.preview_dir, "{}_vh_clean_2.png".format(scan_id))]
         image_list += [os.path.join(args.image_dir, scan_id, "color", "{}.jpg").format(str(image_id)) for image_id in image_ids]
         print(image_list)
         num_iters = len(image_list)
