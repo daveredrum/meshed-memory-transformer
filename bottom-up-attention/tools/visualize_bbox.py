@@ -40,7 +40,7 @@ if __name__ == "__main__":
             plt.imshow(raw_img)
             plt.axis('off')
 
-            boxes = detections["{}-{}".format(scan_id, image_id)]
+            boxes = detections["{}-{}".format(scan_id, image_id)]["boxes"]
 
             for i in range(len(boxes)):
                 bbox = boxes[i]
