@@ -57,7 +57,7 @@ if __name__ == "__main__":
                     td = create_image_cell(image)
                     tr.append(td)
                 else: # des
-                    td = create_text_cell(text)
+                    td = create_text_cell(des)
                     tr.append(td)
 
         break
