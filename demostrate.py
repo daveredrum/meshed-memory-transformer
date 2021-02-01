@@ -36,11 +36,11 @@ if __name__ == "__main__":
         text_list = [scan_id]
         text_list += ["{}-{}".format(scan_id, str(image_id)) for image_id in image_list]
         
-        image_list = [os.path.join(PREVIEW_ROOT, "{}_vh_clean_2.png".format(scan_id))]
-        image_list += [os.path.join(args.image_dir, scan_id, "color", "{}.jpg").format(str(image_id)) for image_id in image_list]
-        
         des_list = [""]
         des_list += [predictions[scan_id][str(image_id)] for image_id in image_list]
+
+        image_list = [os.path.join(PREVIEW_ROOT, "{}_vh_clean_2.png".format(scan_id))]
+        image_list += [os.path.join(args.image_dir, scan_id, "color", "{}.jpg").format(str(image_id)) for image_id in image_list]
         
         for r in range(3):
             tr = SubElement(table, "tr")
