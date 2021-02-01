@@ -10,9 +10,9 @@ def create_text_cell(text):
 
     return td
 
-def create_image_cell(image_path):
+def create_image_cell(attr):
     td = Element("td")
-    img = SubElement(td, "img", attrib={"src": image_path, "width": "300px"})
+    img = SubElement(td, "img", attrib=attr)
 
     return td
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     scan_list = sorted(list(predictions.keys()))
 
     doc = Element("html")
-    table = SubElement(doc, "table")
+    table = SubElement(doc, "table", attrib={"border": "1"})
     for scan_id in scan_list:
         image_ids = sorted([int(k) for k in predictions[scan_id].keys()]) # int
 
@@ -39,7 +39,6 @@ if __name__ == "__main__":
 
         image_list = [os.path.join(args.preview_dir, "{}_vh_clean_2.png".format(scan_id))]
         image_list += [os.path.join(args.image_dir, scan_id, "color", "{}.jpg").format(str(image_id)) for image_id in image_ids]
-        print(image_list)
         num_iters = len(image_list)
         
         for r in range(3):
@@ -53,7 +52,7 @@ if __name__ == "__main__":
                     td = create_text_cell(text)
                     tr.append(td)
                 elif r == 1: # image
-                    td = create_image_cell(image)
+                    td = create_image_cell({"src": image, "height": "240"})
                     tr.append(td)
                 else: # des
                     td = create_text_cell(des)
