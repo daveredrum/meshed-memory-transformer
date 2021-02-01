@@ -42,6 +42,20 @@ FIELDNAMES = ['image_id', 'image_w','image_h','num_boxes', 'boxes', 'features']
 MIN_BOXES = 10
 MAX_BOXES = 50
 
+data_path = './data/genome/1600-400-20'
+
+# Load classes
+CLASSES = ['__background__']
+with open(os.path.join(data_path, 'objects_vocab.txt')) as f:
+    for object in f.readlines():
+        CLASSES.append(object.split(',')[0].lower().strip())
+
+# Load attributes
+ATTRIBUTES = ['__no_attribute__']
+with open(os.path.join(data_path, 'attributes_vocab.txt')) as f:
+    for att in f.readlines():
+        ATTRIBUTES.append(att.split(',')[0].lower().strip())
+
 def parse_args():
     """
     Parse input arguments
@@ -113,6 +127,7 @@ def get_detections_from_features(rcnn, features, im_file, im_info, im_scales, im
 
     cls_boxes = rois[:, 1:5] / im_scales[0]
     cls_prob = rcnn.blobs['cls_prob'].data
+    attr_prob = rcnn.blobs['attr_prob'].data
     pool5 = rcnn.blobs['pool5_flat'].data
 
     # Keep only the best detections
@@ -129,13 +144,30 @@ def get_detections_from_features(rcnn, features, im_file, im_info, im_scales, im
     elif len(keep_boxes) > MAX_BOXES:
         keep_boxes = np.argsort(max_conf)[::-1][:MAX_BOXES]
 
+    boxes = cls_boxes[keep_boxes]
+    objects = np.argmax(cls_prob[keep_boxes][:,1:], axis=1)
+    attr_thresh = 0.1
+    attr = np.argmax(attr_prob[keep_boxes][:,1:], axis=1)
+    attr_conf = np.max(attr_prob[keep_boxes][:,1:], axis=1)
+
+    labels = []
+    for i in range(len(keep_boxes)):
+        cls = CLASSES[objects[i]+1]
+        if attr_conf[i] > attr_thresh:
+            cls = ATTRIBUTES[attr[i]+1] + " " + cls
+
+        labels.append(labels)
+
     detections = {
         'image_h': int(np.size(im, 0)),
         'image_w': int(np.size(im, 1)),
         'num_boxes' : len(keep_boxes),
         'boxes': cls_boxes[keep_boxes],
+        'labels': labels
     }
     det_features = pool5[keep_boxes]
+    print(labels)
+    exit()
 
     return detections, det_features
 
