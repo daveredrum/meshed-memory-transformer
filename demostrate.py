@@ -64,4 +64,4 @@ if __name__ == "__main__":
 
     with open("predictions.html", "w") as f:
         tree = ElementTree(doc)
-        tree.write(f)
+        tree.write(f, encoding="unicode")
