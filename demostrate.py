@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
         image_list = [os.path.join(PREVIEW_ROOT, "{}_vh_clean_2.png".format(scan_id))]
         image_list += [os.path.join(args.image_dir, scan_id, "color", "{}.jpg").format(str(image_id)) for image_id in image_list]
-        
+        print(image_list)
         num_iters = len(image_list)
         
         for r in range(3):
