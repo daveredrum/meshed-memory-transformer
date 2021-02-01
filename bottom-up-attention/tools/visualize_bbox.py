@@ -23,7 +23,7 @@ if __name__ == "__main__":
     os.makedirs(args.out_dir, exist_ok=True)
     print("visualizing detected bounding boxes...")
     for scan_id in tqdm(scan_list):
-        image_root = os.path.join(SCANNET_ROOT, scan_id)
+        image_root = os.path.join(SCANNET_ROOT, scan_id, "color")
         image_list = sorted(os.listdir(image_root))
         os.makedirs(os.path.join(args.out_dir, scan_id), exist_ok=True)
         for image_name in image_list:
