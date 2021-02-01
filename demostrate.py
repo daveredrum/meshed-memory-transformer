@@ -5,8 +5,7 @@ import argparse
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 
 def create_text_cell(text, attr={}):
-    default_attr = {"style": "border: 1px solid black"}
-    td = Element("td", attrib={**attr, **default_attr})
+    td = Element("td", attrib=attr)
     td.text = text
 
     return td
